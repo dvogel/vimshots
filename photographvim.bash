@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# vim: filetype=bash
 
 SEARCH_EXPR="${SEARCH_EXPR:?You must set SEARCH_EXPR to the term vim should search for.}"
 SCREEN_WIDTH="${SCREEN_WIDTH:-800}"
@@ -15,7 +16,7 @@ which readlink
 which scrot
 which Xephyr
 
-SELF_PATH=$(readlink -f $(dirname "$0"))
+SELF_PATH=$(readlink -f "$0")
 SELF_NAME=$(basename "$SELF_PATH")
 
 function usage () {
