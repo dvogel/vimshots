@@ -16,6 +16,7 @@ require_executable readlink
 set -o errexit
 
 SELF_PATH=$(readlink -f "$0")
+SELF_DIR=$(dirname "${SELF_PATH}")
 SELF_NAME=$(basename "${SELF_PATH}")
 
 function usage () {
@@ -69,11 +70,13 @@ mkdir -p "${output_dir}"
 output_dir=$(readlink -f "${output_dir}")
 commits_file="${output_dir}/commits"
 (
-    cd $(dirname "${search_filename}") \
-        && git log --reverse -L :${search_expr}:${search_filename} \
-        | grep ^commit \
-        | cut -d ' ' -f 2 \
+    cd "${git_repo_path}" \
+        && git log --reverse --format=%H "${git_relative_path}" \
         > "${commits_file}"
+        # && git log --reverse -L :${search_expr}:${search_filename} \
+        # | grep ^commit \
+        # | cut -d ' ' -f 2 \
+        # > "${commits_file}"
 )
 wait
 
@@ -87,21 +90,33 @@ elif [[ "${n_commits}" -gt 9999 ]]; then
     exit 2
 fi
 
-echo "Extracting ${n_commits} revisions of ${base_filename}"
+echo "Examining ${n_commits} revisions of ${base_filename}"
+scratch_file1=$(mktemp --tmpdir="${output_dir}" "1-XXXXXX.c")
+scratch_file2=$(mktemp --tmpdir="${output_dir}" "2-XXXXXX.c")
+prev_content_hash=
 n=0
 cd "${git_repo_path}"
 while read c; do
     if [[ -n "${c}" ]]; then
+        no_such_file_in_commit="false"
         echo -e -n "\033[00G${n}/${n_commits}"
         padded_n=$(printf "%04d" ${n})
-        git show "${c}:${git_relative_path}" > "${output_dir}/${padded_n}-${c}-${base_filename}"
+        git show "${c}:${git_relative_path}" 2> /dev/null > "${scratch_file1}" || no_such_file_in_commit="true"
+        if [[ "${no_such_file_in_commit}" == "false" ]]; then
+            bash "${SELF_DIR}/langs/c.bash" "${scratch_file1}" "${search_expr}" > "${scratch_file2}"
+            current_content_hash=$(cat "${scratch_file2}" | md5sum)
+            if [[ "${current_content_hash}" != "${prev_content_hash}" ]]; then
+                cp "${scratch_file2}" "${output_dir}/${padded_n}-${c}-${base_filename}"
+            fi
+            prev_content_hash="${current_content_hash}"
+        fi
         n=$(($n + 1))
         echo -e -n "\033[00G${n}/${n_commits}"
     fi
 done < "${commits_file}"
 echo -e "\033[00G${n}/${n_commits}"
 
-
+rm -f "${scratch_file1}" "${scratch_file2}"
 rm -f "${commits_file}"
 n_files=$(ls -1 "${output_dir}" | wc -l)
 echo "Output ${n_files} revisions of ${base_filename} to ${output_dir}"

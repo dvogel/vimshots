@@ -2,4 +2,5 @@ home/.viminfo
 home/.gnome2
 .*.swp
 tmp/
+output*/
 
