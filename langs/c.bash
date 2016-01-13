@@ -17,7 +17,7 @@ done
 
 if [[ -n "$function_start" && -n "$next_start" ]]; then
     function_length=$(($next_start - $function_start))
-    approx=$(cat "$1" | head -n $next_start | tail -n $(($function_length + 2)))
+    approx=$(cat "$1" | head -n $(($next_start - 2)) | tail -n $function_length)
     echo "$approx"
     # last_line_num=$(echo "$approx" | grep -n --no-filename "^}" | cut -f1 -d:)
     # echo "$approx" | head -n $last_line_num
