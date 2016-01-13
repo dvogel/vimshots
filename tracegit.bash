@@ -30,17 +30,17 @@ function usage () {
 }
 
 
-opt_outdir="output${$}"
+output_dir="output${$}"
 
 while [[ 1 ]]; do
     case $1 in
-        -o|--outdir)
-            [[ -z "${2}" ]] && usage "Directory argument required for $1 option."
-            opt_outdir="${2}"
-            shift
-            ;;
         -h|--help)
             usage
+            ;;
+        -o|--outdir)
+            [[ -z "${2}" ]] && usage "Directory argument required for $1 option."
+            output_dir="${2}"
+            shift
             ;;
         --)
             shift
@@ -65,9 +65,9 @@ git_repo_path=$(cd $(dirname "${search_filename}") && git rev-parse --show-tople
 git_relative_path="${search_filename#${git_repo_path}/}"
 base_filename=$(basename "${search_filename}")
 
-mkdir -p "${opt_outdir}"
-opt_outdir=$(readlink -f "${opt_outdir}")
-commits_file="${opt_outdir}/commits"
+mkdir -p "${output_dir}"
+output_dir=$(readlink -f "${output_dir}")
+commits_file="${output_dir}/commits"
 (
     cd $(dirname "${search_filename}") \
         && git log --reverse -L :${search_expr}:${search_filename} \
@@ -94,7 +94,7 @@ while read c; do
     if [[ -n "${c}" ]]; then
         echo -e -n "\033[00G${n}/${n_commits}"
         padded_n=$(printf "%04d" ${n})
-        git show "${c}:${git_relative_path}" > "${opt_outdir}/${padded_n}-${c}-${base_filename}"
+        git show "${c}:${git_relative_path}" > "${output_dir}/${padded_n}-${c}-${base_filename}"
         n=$(($n + 1))
         echo -e -n "\033[00G${n}/${n_commits}"
     fi
@@ -103,5 +103,5 @@ echo -e "\033[00G${n}/${n_commits}"
 
 
 rm -f "${commits_file}"
-n_files=$(ls -1 "${opt_outdir}" | wc -l)
-echo "Output ${n_files} revisions of ${base_filename} to ${opt_outdir}"
+n_files=$(ls -1 "${output_dir}" | wc -l)
+echo "Output ${n_files} revisions of ${base_filename} to ${output_dir}"
