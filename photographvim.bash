@@ -109,13 +109,15 @@ while [[ 1 ]]; do
     (gvim --serverlist | egrep VIMSHOTS) && break
 done
 for srcpath in "${source_code_dir}"/*; do
-    srcfile=$(basename "${srcpath}")
-    dstpath="${output_dir}/${srcfile}.png"
-    $vimcmd --remote-send ":edit ${srcpath}<CR><CR>gg"
-    #/${search_expr}<CR>zt<CR>"
-    sleep 1
-    scrot "${dstpath}.png"
-    $vimcmd --remote-send ":bdel<CR><CR>"
+    if [[ -s "${srcpath}" ]]; then
+        srcfile=$(basename "${srcpath}")
+        dstpath="${output_dir}/${srcfile}.png"
+        $vimcmd --remote-send ":edit ${srcpath}<CR><CR>gg"
+        #/${search_expr}<CR>zt<CR>"
+        sleep 1
+        scrot "${dstpath}.png"
+        $vimcmd --remote-send ":bdel<CR><CR>"
+    fi
 done
 $vimcmd --remote-send ":qall!<CR>"
 
